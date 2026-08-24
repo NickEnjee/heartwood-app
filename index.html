@@ -436,7 +436,9 @@
   }
   .qcard{perspective:1200px;height:206px;position:relative;transition:transform .18s var(--ease),box-shadow .18s var(--ease)}
   .qcard.dragging{transform:scale(1.05);box-shadow:0 14px 28px rgba(0,0,0,.5);z-index:5}
-  .qcard.phone-expand{position:fixed;left:16px;right:16px;top:9vh;bottom:9vh;height:auto;z-index:45}
+  .qcard.phone-expand{position:fixed;left:16px;right:16px;top:50%;transform:translateY(-50%);height:auto;aspect-ratio:16/9;z-index:45}
+  .qcard.phone-expand .qbackhead .qname{color:var(--chalk);font-size:24px}
+  .qcard.phone-expand .subtask{font-size:26px}
   .qcard-scrim{display:none;position:fixed;inset:0;background:rgba(6,8,12,.72);z-index:40}
   .qcard-scrim.show{display:block}
   .qinner{
