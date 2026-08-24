@@ -423,6 +423,13 @@
 
   /* ---------- quest cards ---------- */
   .qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .coltoggle{display:flex;justify-content:flex-end;gap:6px;margin:-8px 0 14px}
+  .colbtn{
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;
+    padding:5px 11px;border:1px solid var(--line);border-radius:3px;
+    background:transparent;color:var(--chalk-dim);cursor:pointer;
+  }
+  .colbtn.on{border-color:var(--brass);color:var(--brass)}
   .qhead{
     font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
     color:var(--chalk-dim);margin:34px 0 12px;
@@ -957,6 +964,11 @@
       <input id="newtask" placeholder="What needs doing, once?" maxlength="160">
       <button class="btn key" id="addtask">Add</button>
     </div>
+    <div class="coltoggle">
+      <button class="colbtn" data-cols="1" title="Single column">1</button>
+      <button class="colbtn" data-cols="2" title="Double column">2</button>
+      <button class="colbtn" data-cols="3" title="Triple column">3</button>
+    </div>
     <div id="tasklist"></div>
   </section>
 
@@ -1191,6 +1203,7 @@ function freshState(){
     spent:0,
     branchXP:0,
     frameSize:null,
+    taskCols:null,
     done:[],
     cells:[],
     notify:{minMin:120,maxMin:240,quietStart:23,quietEnd:8,nextAt:null,lastAt:null},
@@ -1264,6 +1277,7 @@ if(!S.shop)S.shop=[];
 if(typeof S.spent!=="number")S.spent=0;
 if(typeof S.branchXP!=="number")S.branchXP=0;
 if(S.frameSize===undefined)S.frameSize=null;
+if(S.taskCols!==1&&S.taskCols!==2&&S.taskCols!==3)S.taskCols=null;
 if(typeof S.completionPauseSec!=="number"||S.completionPauseSec<0)S.completionPauseSec=5;
 if(typeof S.comboTextInMs!=="number"||S.comboTextInMs<0)S.comboTextInMs=650;
 if(typeof S.comboTextOutMs!=="number"||S.comboTextOutMs<0)S.comboTextOutMs=650;
@@ -1857,8 +1871,13 @@ function renderTasks(){
     return h;
   }
 
-  box.innerHTML='<div class="qgrid">'+live.map(card).join("")+'</div>'+
-    (dead.length?'<div class="qhead">Done</div><div class="qgrid">'+dead.map(card).join("")+'</div>':"");
+  var colStyle=S.taskCols?' style="grid-template-columns:repeat('+S.taskCols+',1fr)"':"";
+  box.innerHTML='<div class="qgrid"'+colStyle+'>'+live.map(card).join("")+'</div>'+
+    (dead.length?'<div class="qhead">Done</div><div class="qgrid"'+colStyle+'>'+dead.map(card).join("")+'</div>':"");
+
+  Array.prototype.forEach.call(document.querySelectorAll(".colbtn"),function(btn){
+    btn.classList.toggle("on",+btn.getAttribute("data-cols")===S.taskCols);
+  });
 
   Array.prototype.forEach.call(box.querySelectorAll(".qtext"),fitQuestText);
 
@@ -2018,6 +2037,13 @@ function addTask(){
   S.tasks.push(mkTask(v));
   inp.value=""; save(); renderTasks();
 }
+Array.prototype.forEach.call(document.querySelectorAll(".colbtn"),function(btn){
+  btn.addEventListener("click",function(){
+    var n=+btn.getAttribute("data-cols");
+    S.taskCols=(S.taskCols===n)?null:n;
+    save(); renderTasks();
+  });
+});
 
 /* ============ branches (settings) ============ */
 function renderBranches(){
@@ -3159,6 +3185,7 @@ document.getElementById("impfile").addEventListener("change",function(e){
       if(typeof S.spent!=="number")S.spent=0;
       if(typeof S.branchXP!=="number")S.branchXP=0;
       if(S.frameSize===undefined)S.frameSize=null;
+      if(S.taskCols!==1&&S.taskCols!==2&&S.taskCols!==3)S.taskCols=null;
       if(typeof S.completionPauseSec!=="number"||S.completionPauseSec<0)S.completionPauseSec=5;
       if(typeof S.comboTextInMs!=="number"||S.comboTextInMs<0)S.comboTextInMs=650;
       if(typeof S.comboTextOutMs!=="number"||S.comboTextOutMs<0)S.comboTextOutMs=650;
