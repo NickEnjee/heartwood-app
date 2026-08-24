@@ -1846,17 +1846,17 @@ function renderTasks(){
     h+='<div class="qface qback">';
     h+='<div class="qbackhead"><span class="qname">'+esc(t.text)+'</span>'+
        '<button class="gear'+(editing?" on":"")+'" data-gear="'+t.id+'" data-noflip="1" title="Edit XP and subtasks">&#9881;</button></div>';
-    h+='<div class="qscroll" data-noflip="1">';
+    h+='<div class="qscroll">';
     if(subs.length){
       h+=subs.map(function(s){
         var p=t.id+":"+s.id;
         var r='<div class="subtask'+(s.done?" done":"")+'">';
-        r+='<button class="subcheck"'+(s.done?"":' data-subhold="'+p+'"')+' title="Hold to complete">'+
+        r+='<button class="subcheck" data-noflip="1"'+(s.done?"":' data-subhold="'+p+'"')+' title="Hold to complete">'+
            '<div class="holdfill"></div><span>'+(s.done?"&#10003;":"")+'</span></button>';
         r+='<span class="subtext">'+esc(s.text)+'</span>';
         if(editing){
-          r+='<input type="number" class="ptsedit" data-subpts="'+p+'" min="1" max="50" value="'+s.points+'">';
-          r+='<button class="x" data-subdel="'+p+'">&times;</button>';
+          r+='<input type="number" class="ptsedit" data-noflip="1" data-subpts="'+p+'" min="1" max="50" value="'+s.points+'">';
+          r+='<button class="x" data-noflip="1" data-subdel="'+p+'">&times;</button>';
         }else{
           r+='<span class="subpts">'+s.points+' xp</span>';
         }
