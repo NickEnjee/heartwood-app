@@ -436,6 +436,9 @@
   }
   .qcard{perspective:1200px;height:206px;position:relative;transition:transform .18s var(--ease),box-shadow .18s var(--ease)}
   .qcard.dragging{transform:scale(1.05);box-shadow:0 14px 28px rgba(0,0,0,.5);z-index:5}
+  .qcard.phone-expand{position:fixed;left:16px;right:16px;top:9vh;bottom:9vh;height:auto;z-index:45}
+  .qcard-scrim{display:none;position:fixed;inset:0;background:rgba(6,8,12,.72);z-index:40}
+  .qcard-scrim.show{display:block}
   .qinner{
     position:relative;width:100%;height:100%;
     transform-style:preserve-3d;
@@ -1123,6 +1126,8 @@
   </div>
 </div>
 
+<div class="qcard-scrim" id="qcardScrim"></div>
+
 <div class="flash" id="flash"></div>
 
 <script>
@@ -1371,6 +1376,7 @@ function bindAll(root,sel,attr,fn){
 }
 
 /* ============ hold gesture ============ */
+function isPhoneWidth(){return window.innerWidth<=640;}
 function bindHold(el,onHold,ms){
   ms=ms||650;
   var timer=null, filling=false;
@@ -1882,12 +1888,29 @@ function renderTasks(){
   Array.prototype.forEach.call(box.querySelectorAll(".qtext"),fitQuestText);
 
   /* tap card to flip */
+  var scrim=document.getElementById("qcardScrim");
+  Array.prototype.forEach.call(box.querySelectorAll(".qcard.flipped"),function(cardEl){
+    if(isPhoneWidth())cardEl.classList.add("phone-expand");
+  });
+  scrim.classList.toggle("show",isPhoneWidth()&&!!box.querySelector(".qcard.flipped"));
   Array.prototype.forEach.call(box.querySelectorAll(".qcard"),function(cardEl){
     cardEl.addEventListener("click",function(e){
       if(e.target.closest&&e.target.closest("[data-noflip]"))return;
       var t=findTask(cardEl.getAttribute("data-id")); if(!t)return;
+      var phoneMode=isPhoneWidth();
+      var opening=!t.flipped;
+      if(phoneMode&&opening){
+        Array.prototype.forEach.call(box.querySelectorAll(".qcard.flipped"),function(other){
+          if(other===cardEl)return;
+          var ot=findTask(other.getAttribute("data-id"));
+          if(ot)ot.flipped=false;
+          other.classList.remove("flipped","phone-expand");
+        });
+      }
       t.flipped=!t.flipped;
       cardEl.classList.toggle("flipped",!!t.flipped);
+      cardEl.classList.toggle("phone-expand",!!t.flipped&&phoneMode);
+      scrim.classList.toggle("show",!!t.flipped&&phoneMode);
     });
   });
 
@@ -2037,6 +2060,14 @@ function addTask(){
   S.tasks.push(mkTask(v));
   inp.value=""; save(); renderTasks();
 }
+document.getElementById("qcardScrim").addEventListener("click",function(){
+  Array.prototype.forEach.call(document.querySelectorAll(".qcard.flipped"),function(cardEl){
+    var t=findTask(cardEl.getAttribute("data-id"));
+    if(t)t.flipped=false;
+    cardEl.classList.remove("flipped","phone-expand");
+  });
+  this.classList.remove("show");
+});
 Array.prototype.forEach.call(document.querySelectorAll(".colbtn"),function(btn){
   btn.addEventListener("click",function(){
     var n=+btn.getAttribute("data-cols");
