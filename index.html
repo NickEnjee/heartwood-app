@@ -467,6 +467,15 @@
     100%{box-shadow:0 0 0 16px rgba(78,224,137,0)}
   }
 
+  .qfront-gear,.qfront-del{
+    position:absolute;top:1px;z-index:2;line-height:1;
+    background:transparent;border:none;cursor:pointer;
+  }
+  .qfront-gear{right:2px;font-size:13px;color:var(--chalk-faint);padding:5px 7px}
+  .qfront-gear:hover{color:var(--chalk-dim)}
+  .qfront-del{left:2px;font-size:16px;color:var(--chalk-faint);padding:3px 8px}
+  .qfront-del:hover{color:var(--rust)}
+
   .qgrip{
     display:flex;align-items:center;justify-content:center;gap:3px;
     height:22px;flex-shrink:0;
@@ -1893,6 +1902,8 @@ function renderTasks(){
 
     /* front */
     h+='<div class="qface qfront">';
+    h+='<button class="qfront-del" data-noflip="1" data-del="'+t.id+'" title="Delete quest">&times;</button>';
+    h+='<button class="qfront-gear" data-noflip="1" data-frontgear="'+t.id+'" title="Edit quest">&#9881;</button>';
     h+= t.done
       ? '<div class="qgrip" data-noflip="1" style="cursor:default"><i></i><i></i><i></i></div>'
       : '<div class="qgrip" data-grip="'+t.id+'" data-noflip="1" title="Drag to reorder"><i></i><i></i><i></i><i></i><i></i></div>';
@@ -1994,6 +2005,15 @@ function renderTasks(){
   bindAll(box,"[data-gear]","gear",function(id){
     var t=findTask(id); if(!t)return;
     t.editing=!t.editing; renderTasks();
+  });
+  bindAll(box,"[data-frontgear]","frontgear",function(id){
+    var t=findTask(id); if(!t)return;
+    if(isPhoneWidth()){
+      S.tasks.forEach(function(o){if(o.id!==id)o.flipped=false;});
+    }
+    t.flipped=true;
+    t.editing=true;
+    renderTasks();
   });
   bindAll(box,"[data-del]","del",function(id){
     S.tasks=S.tasks.filter(function(t){return t.id!==id;});
