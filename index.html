@@ -1077,6 +1077,31 @@
     </div>
 
     <div class="block">
+      <h3>Sounds</h3>
+      <div class="txt">Drag a slider to hear that sound at the new volume.</div>
+      <div class="diffrow">
+        <div class="lbl"><span>Bubble fill blip</span><span id="volBlipVal">100%</span></div>
+        <input type="range" id="volBlip" min="0" max="100" step="5" value="100">
+      </div>
+      <div class="diffrow">
+        <div class="lbl"><span>XP burst</span><span id="volExplosionVal">100%</span></div>
+        <input type="range" id="volExplosion" min="0" max="100" step="5" value="100">
+      </div>
+      <div class="diffrow">
+        <div class="lbl"><span>Celebration tune</span><span id="volTuneVal">100%</span></div>
+        <input type="range" id="volTune" min="0" max="100" step="5" value="100">
+      </div>
+      <div class="diffrow">
+        <div class="lbl"><span>XP bar sweep</span><span id="volSweepVal">100%</span></div>
+        <input type="range" id="volSweep" min="0" max="100" step="5" value="100">
+      </div>
+      <div class="diffrow">
+        <div class="lbl"><span>Level-up fanfare</span><span id="volFanfareVal">100%</span></div>
+        <input type="range" id="volFanfare" min="0" max="100" step="5" value="100">
+      </div>
+    </div>
+
+    <div class="block">
       <h3>Test mode</h3>
       <div class="txt">Try things out risk-free — everything you do after pressing this gets undone the moment you press it again.</div>
       <button class="btn" id="testModeBtn">Enter test mode</button>
@@ -1233,7 +1258,8 @@ function freshState(){
     embersFadeOpacity:0.5,
     embersEndScale:0.3,
     embersEasing:"ease-out",
-    embersColor:"#e5b93c"
+    embersColor:"#e5b93c",
+    soundVolume:{blip:1,explosion:1,tune:1,sweep:1,fanfare:1}
   };
 }
 
@@ -1305,6 +1331,10 @@ if(typeof S.embersFadeOpacity!=="number")S.embersFadeOpacity=0.5;
 if(typeof S.embersEndScale!=="number")S.embersEndScale=0.3;
 if(typeof S.embersEasing!=="string"||!S.embersEasing)S.embersEasing="ease-out";
 if(typeof S.embersColor!=="string"||!S.embersColor)S.embersColor="#e5b93c";
+if(typeof S.soundVolume!=="object"||!S.soundVolume)S.soundVolume={};
+["blip","explosion","tune","sweep","fanfare"].forEach(function(k){
+  if(typeof S.soundVolume[k]!=="number"||S.soundVolume[k]<0||S.soundVolume[k]>1)S.soundVolume[k]=1;
+});
 S.branches.forEach(function(b,i){
   if(typeof b.bubbleXP!=="number")b.bubbleXP=(typeof S.bubbleXP==="number")?S.bubbleXP:5;
   if(typeof b.bubbleSpacing!=="number"||b.bubbleSpacing<0)b.bubbleSpacing=defaultSpacing(b.bubbles);
@@ -2800,6 +2830,16 @@ function renderNotifySettings(){
   document.getElementById("embEndScale").value=S.embersEndScale;
   document.getElementById("embEasing").value=S.embersEasing;
   document.getElementById("embColor").value=S.embersColor;
+  document.getElementById("volBlip").value=Math.round(S.soundVolume.blip*100);
+  document.getElementById("volBlipVal").textContent=Math.round(S.soundVolume.blip*100)+"%";
+  document.getElementById("volExplosion").value=Math.round(S.soundVolume.explosion*100);
+  document.getElementById("volExplosionVal").textContent=Math.round(S.soundVolume.explosion*100)+"%";
+  document.getElementById("volTune").value=Math.round(S.soundVolume.tune*100);
+  document.getElementById("volTuneVal").textContent=Math.round(S.soundVolume.tune*100)+"%";
+  document.getElementById("volSweep").value=Math.round(S.soundVolume.sweep*100);
+  document.getElementById("volSweepVal").textContent=Math.round(S.soundVolume.sweep*100)+"%";
+  document.getElementById("volFanfare").value=Math.round(S.soundVolume.fanfare*100);
+  document.getElementById("volFanfareVal").textContent=Math.round(S.soundVolume.fanfare*100)+"%";
 }
 
 /* ============ sound ============ */
@@ -2813,26 +2853,28 @@ function getAudioCtx(){
   return audioCtx;
 }
 function playBlip(){
+  var vol=S.soundVolume.blip; if(vol<=0)return;
   var ctx=getAudioCtx(), t0=ctx.currentTime;
   [660,880].forEach(function(freq,i){
     var osc=ctx.createOscillator(), gain=ctx.createGain();
     osc.type="square"; osc.frequency.value=freq;
     var start=t0+i*0.07;
     gain.gain.setValueAtTime(0.0001,start);
-    gain.gain.exponentialRampToValueAtTime(0.15,start+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.15*vol,start+0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001,start+0.12);
     osc.connect(gain).connect(ctx.destination);
     osc.start(start); osc.stop(start+0.14);
   });
 }
 function playExplosion(pitchMult){
+  var vol=S.soundVolume.explosion; if(vol<=0)return;
   pitchMult=pitchMult||1;
   var ctx=getAudioCtx(), t0=ctx.currentTime;
   var osc=ctx.createOscillator(), oscGain=ctx.createGain();
   osc.type="square";
   osc.frequency.setValueAtTime(180*pitchMult,t0);
   osc.frequency.exponentialRampToValueAtTime(40*pitchMult,t0+0.25);
-  oscGain.gain.setValueAtTime(0.25,t0);
+  oscGain.gain.setValueAtTime(0.25*vol,t0);
   oscGain.gain.exponentialRampToValueAtTime(0.0001,t0+0.3);
   osc.connect(oscGain).connect(ctx.destination);
   osc.start(t0); osc.stop(t0+0.32);
@@ -2846,12 +2888,13 @@ function playExplosion(pitchMult){
   var noiseFilter=ctx.createBiquadFilter();
   noiseFilter.type="bandpass"; noiseFilter.frequency.value=1200*pitchMult;
   var noiseGain=ctx.createGain();
-  noiseGain.gain.setValueAtTime(0.2,t0);
+  noiseGain.gain.setValueAtTime(0.2*vol,t0);
   noiseGain.gain.exponentialRampToValueAtTime(0.0001,t0+0.3);
   noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
   noise.start(t0);
 }
 function playCelebrationTune(){
+  var vol=S.soundVolume.tune; if(vol<=0)return;
   var ctx=getAudioCtx(), t0=ctx.currentTime;
   var BEAT=0.55;
   var C5=523.25,D5=587.33,B4=493.88,G5=783.99,E5=659.25,
@@ -2870,8 +2913,8 @@ function playCelebrationTune(){
     var osc=ctx.createOscillator(), gain=ctx.createGain();
     osc.type="square"; osc.frequency.value=freq;
     gain.gain.setValueAtTime(0.0001,start);
-    gain.gain.exponentialRampToValueAtTime(0.14,start+Math.min(0.02,dur*0.15));
-    gain.gain.setValueAtTime(0.14,start+dur*0.75);
+    gain.gain.exponentialRampToValueAtTime(0.14*vol,start+Math.min(0.02,dur*0.15));
+    gain.gain.setValueAtTime(0.14*vol,start+dur*0.75);
     gain.gain.exponentialRampToValueAtTime(0.0001,start+dur*0.98);
     osc.connect(gain).connect(ctx.destination);
     osc.start(start); osc.stop(start+dur);
@@ -2897,6 +2940,7 @@ function playFireworkShow(){
   playCelebrationTune();
 }
 function playLevelSweep(durationMs,points){
+  var vol=S.soundVolume.sweep; if(vol<=0)return;
   var ctx=getAudioCtx(), t0=ctx.currentTime, dur=durationMs/1000;
   var octaves=Math.max(1,Math.min(3,1+points/20));
   var startFreq=220, endFreq=startFreq*Math.pow(2,octaves);
@@ -2905,14 +2949,15 @@ function playLevelSweep(durationMs,points){
   osc.frequency.setValueAtTime(startFreq,t0);
   osc.frequency.exponentialRampToValueAtTime(endFreq,t0+dur);
   gain.gain.setValueAtTime(0.0001,t0);
-  gain.gain.exponentialRampToValueAtTime(0.12,t0+Math.min(0.05,dur*0.2));
-  gain.gain.setValueAtTime(0.12,t0+dur*0.8);
+  gain.gain.exponentialRampToValueAtTime(0.12*vol,t0+Math.min(0.05,dur*0.2));
+  gain.gain.setValueAtTime(0.12*vol,t0+dur*0.8);
   gain.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
   osc.connect(gain).connect(ctx.destination);
   osc.start(t0); osc.stop(t0+dur+0.05);
 }
 var FANFARE_MS=2320;
 function playLevelUpFanfare(){
+  var vol=S.soundVolume.fanfare; if(vol<=0)return;
   var ctx=getAudioCtx(), t0=ctx.currentTime;
   var notes=[523.25,659.25,783.99,1046.50,1318.51,1567.98];
   var noteLen=0.12;
@@ -2921,7 +2966,7 @@ function playLevelUpFanfare(){
     var osc=ctx.createOscillator(), gain=ctx.createGain();
     osc.type="square"; osc.frequency.value=freq;
     gain.gain.setValueAtTime(0.0001,start);
-    gain.gain.exponentialRampToValueAtTime(0.18,start+0.015);
+    gain.gain.exponentialRampToValueAtTime(0.18*vol,start+0.015);
     gain.gain.exponentialRampToValueAtTime(0.0001,start+noteLen*0.95);
     osc.connect(gain).connect(ctx.destination);
     osc.start(start); osc.stop(start+noteLen);
@@ -2931,8 +2976,8 @@ function playLevelUpFanfare(){
     var osc=ctx.createOscillator(), gain=ctx.createGain();
     osc.type="square"; osc.frequency.value=freq;
     gain.gain.setValueAtTime(0.0001,chordStart);
-    gain.gain.exponentialRampToValueAtTime(0.14,chordStart+0.03);
-    gain.gain.setValueAtTime(0.14,chordStart+chordDur*0.6);
+    gain.gain.exponentialRampToValueAtTime(0.14*vol,chordStart+0.03);
+    gain.gain.setValueAtTime(0.14*vol,chordStart+chordDur*0.6);
     gain.gain.exponentialRampToValueAtTime(0.0001,chordStart+chordDur);
     osc.connect(gain).connect(ctx.destination);
     osc.start(chordStart); osc.stop(chordStart+chordDur+0.05);
@@ -3092,6 +3137,24 @@ document.getElementById("embColor").addEventListener("change",function(e){
   S.embersColor=e.target.value;
   save(); renderTree();
 });
+var SOUND_VOL_FIELDS=[
+  {id:"volBlip",key:"blip",test:function(){playBlip();}},
+  {id:"volExplosion",key:"explosion",test:function(){playExplosion();}},
+  {id:"volTune",key:"tune",test:function(){playCelebrationTune();}},
+  {id:"volSweep",key:"sweep",test:function(){playLevelSweep(700,20);}},
+  {id:"volFanfare",key:"fanfare",test:function(){playLevelUpFanfare();}}
+];
+SOUND_VOL_FIELDS.forEach(function(f){
+  var input=document.getElementById(f.id), val=document.getElementById(f.id+"Val");
+  input.addEventListener("input",function(e){
+    val.textContent=e.target.value+"%";
+  });
+  input.addEventListener("change",function(e){
+    S.soundVolume[f.key]=Math.max(0,Math.min(100,parseInt(e.target.value,10)||0))/100;
+    save();
+    f.test();
+  });
+});
 
 document.getElementById("exp").addEventListener("click",function(){
   var data=JSON.stringify(S,null,2);
@@ -3244,6 +3307,10 @@ document.getElementById("impfile").addEventListener("change",function(e){
       if(typeof S.embersEndScale!=="number")S.embersEndScale=0.3;
       if(typeof S.embersEasing!=="string"||!S.embersEasing)S.embersEasing="ease-out";
       if(typeof S.embersColor!=="string"||!S.embersColor)S.embersColor="#e5b93c";
+      if(typeof S.soundVolume!=="object"||!S.soundVolume)S.soundVolume={};
+      ["blip","explosion","tune","sweep","fanfare"].forEach(function(k){
+        if(typeof S.soundVolume[k]!=="number"||S.soundVolume[k]<0||S.soundVolume[k]>1)S.soundVolume[k]=1;
+      });
       S.branches.forEach(function(b,i){
         if(typeof b.bubbleXP!=="number")b.bubbleXP=(typeof S.bubbleXP==="number")?S.bubbleXP:5;
         if(typeof b.bubbleSpacing!=="number"||b.bubbleSpacing<0)b.bubbleSpacing=defaultSpacing(b.bubbles);
