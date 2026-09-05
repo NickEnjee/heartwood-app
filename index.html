@@ -107,6 +107,7 @@
   .figwrap svg{width:100%;height:auto;overflow:visible}
 
   .branch-label{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;fill:var(--chalk-dim)}
+  .branch-level-label{font-family:var(--mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;fill:var(--brass);opacity:.85}
   .bubble-group{transition:filter .3s var(--ease)}
   .bubble-dim{opacity:var(--bubble-opacity,.88)}
   .bubble-empty{stroke:rgba(255,255,255,.22);stroke-width:.9;fill:url(#bubbleEmptyGrad)}
@@ -1194,7 +1195,7 @@ function defaultSpacing(bubbles){
 var HABIT_PALETTE=["#4ee089","#f2b84b","#c85bf2","#5b9cf2","#f2596b","#e8f25b"];
 function mkBranch(label,bubbles,i){
   return {id:"b"+Date.now()+"_"+Math.random().toString(36).slice(2,7)+i,
-          label:label,bubbles:bubbles,reward:"",filled:0,maxPerDay:1,bubbleXP:5,
+          label:label,bubbles:bubbles,reward:"",filled:0,level:0,maxPerDay:1,bubbleXP:5,
           bubbleBaseSize:BUBBLE_BASE_R,bubbleGrowth:0.6,bubbleSpacing:defaultSpacing(bubbles),
           fillsToday:0,lastFilledDate:null,active:true,
           habitTrack:false,habitColor:HABIT_PALETTE[i%HABIT_PALETTE.length]};
@@ -1249,7 +1250,7 @@ function migrateToV3(old,backupKey){
   var branches=(Array.isArray(old.branches)&&old.branches.length)
     ? old.branches.map(function(b){
         return {id:b.id,label:b.label,bubbles:b.bubbles,reward:b.reward||"",
-                filled:b.filled||0,maxPerDay:b.maxPerDay||1,
+                filled:b.filled||0,level:b.level||0,maxPerDay:b.maxPerDay||1,
                 bubbleXP:b.bubbleXP||old.bubbleXP||5,
                 bubbleBaseSize:BUBBLE_BASE_R,
                 bubbleGrowth:0.6,
@@ -1309,6 +1310,7 @@ S.branches.forEach(function(b,i){
   if(typeof b.bubbleSpacing!=="number"||b.bubbleSpacing<0)b.bubbleSpacing=defaultSpacing(b.bubbles);
   if(typeof b.habitTrack!=="boolean")b.habitTrack=false;
   if(typeof b.habitColor!=="string"||!b.habitColor)b.habitColor=HABIT_PALETTE[i%HABIT_PALETTE.length];
+  if(typeof b.level!=="number"||b.level<0)b.level=0;
 });
 delete S.bubbleXP;
 delete S.bubbleGrowth;
@@ -1539,10 +1541,13 @@ function drawTree(flareId,newFillBranchId){
 
     var tipR=layout.positions[0];
     var lp=[(tipR+20)*Math.cos(ang),(tipR+20)*Math.sin(ang)];
-    var gp=[(tipR+42)*Math.cos(ang),(tipR+42)*Math.sin(ang)];
+    var lvp=[(tipR+31)*Math.cos(ang),(tipR+31)*Math.sin(ang)];
+    var gp=[(tipR+50)*Math.cos(ang),(tipR+50)*Math.sin(ang)];
     var anchor = Math.cos(ang)>0.12?"start":(Math.cos(ang)<-0.12?"end":"middle");
     s+='<text class="branch-label" x="'+lp[0].toFixed(1)+'" y="'+lp[1].toFixed(1)+
        '" text-anchor="'+anchor+'">'+esc(b.label)+"</text>";
+    s+='<text class="branch-level-label" x="'+lvp[0].toFixed(1)+'" y="'+lvp[1].toFixed(1)+
+       '" text-anchor="'+anchor+'">LV '+(b.level+1)+"</text>";
     s+='<text class="branch-gear" data-bgear="'+b.id+'" x="'+gp[0].toFixed(1)+'" y="'+gp[1].toFixed(1)+
        '" text-anchor="'+anchor+'">&#9881;</text>';
   });
@@ -1587,6 +1592,7 @@ function renderTree(newFillBranchId){
 function claimBranch(id){
   var b=findBranch(id); if(!b)return;
   S.claims.push({t:nowMs(),branchId:b.id,label:b.label,reward:b.reward.trim()||b.label});
+  b.level++;
   b.filled=0;
   save();
   renderTree();
