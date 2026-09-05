@@ -279,7 +279,8 @@
   .btn.key:hover{background:var(--brass);border-color:var(--brass);color:var(--ink)}
 
   /* ---------- xp ---------- */
-  .xprow{margin:0 0 26px;position:relative}
+  .xprow{margin:0 0 26px;position:relative;display:flex;flex-direction:column}
+  .xprow.label-top{flex-direction:column-reverse}
   .xpbar{
     height:16px;border-radius:8px;overflow:hidden;position:relative;
     background:repeating-linear-gradient(135deg,var(--ink-2) 0 6px,var(--ink-3) 6px 12px);
@@ -309,10 +310,11 @@
     100%{box-shadow:0 0 0 10px rgba(58,224,137,0)}
   }
   .xplabel{
-    margin-top:6px;text-align:center;
-    font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+    font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;
     color:var(--chalk-faint);
   }
+  .xprow:not(.label-top) .xplabel{margin-top:6px}
+  .xprow.label-top .xplabel{margin-bottom:6px}
 
   /* ---------- check-in ---------- */
   .checkin-row{display:flex;justify-content:center;margin-top:30px}
@@ -921,6 +923,16 @@
         <div class="menu-grip" data-drag-handle><i></i><i></i><i></i><i></i><i></i></div>
         <label class="lbl">Frame size (px)<input type="number" id="frameSizeInput" min="150" max="1000" placeholder="Full width"></label>
         <label class="lbl">Bubble opacity (%)<input type="number" id="bubbleOpacityInput" min="10" max="100" step="5"></label>
+        <label class="lbl">Level label size (px)<input type="number" id="xpLabelSizeInput" min="6" max="32" step="1"></label>
+        <label class="lbl">Level label align<select id="xpLabelAlignInput">
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select></label>
+        <label class="lbl">Level label position<select id="xpLabelPositionInput">
+            <option value="top">Top of bar</option>
+            <option value="bottom">Bottom of bar</option>
+          </select></label>
         <details class="embers-details">
           <summary>Streak ember settings</summary>
           <div class="embers-grid">
@@ -1246,6 +1258,9 @@ function freshState(){
     checkinXPAmount:5,
     checkinXPTotal:0,
     bubbleOpacity:0.88,
+    xpLabelFontSize:9,
+    xpLabelAlign:"center",
+    xpLabelPosition:"bottom",
     embersCount:4,
     embersSizeMin:1.6,
     embersSizeMax:3.8,
@@ -1318,6 +1333,9 @@ if(typeof S.comboTextOutMs!=="number"||S.comboTextOutMs<0)S.comboTextOutMs=650;
 if(typeof S.checkinXPAmount!=="number"||S.checkinXPAmount<0)S.checkinXPAmount=5;
 if(typeof S.checkinXPTotal!=="number")S.checkinXPTotal=0;
 if(typeof S.bubbleOpacity!=="number"||S.bubbleOpacity<=0||S.bubbleOpacity>1)S.bubbleOpacity=0.88;
+if(typeof S.xpLabelFontSize!=="number"||S.xpLabelFontSize<6||S.xpLabelFontSize>32)S.xpLabelFontSize=9;
+if(["left","center","right"].indexOf(S.xpLabelAlign)<0)S.xpLabelAlign="center";
+if(["top","bottom"].indexOf(S.xpLabelPosition)<0)S.xpLabelPosition="bottom";
 if(typeof S.embersCount!=="number"||S.embersCount<1)S.embersCount=4;
 if(typeof S.embersSizeMin!=="number")S.embersSizeMin=1.6;
 if(typeof S.embersSizeMax!=="number")S.embersSizeMax=3.8;
@@ -1634,6 +1652,10 @@ function applyFrameSize(){
   var svg=document.getElementById("glyph");
   svg.style.maxWidth=(typeof S.frameSize==="number"&&S.frameSize>0)?S.frameSize+"px":"";
   svg.style.setProperty("--bubble-opacity",S.bubbleOpacity);
+  document.getElementById("xprow").classList.toggle("label-top",S.xpLabelPosition==="top");
+  var label=document.getElementById("xplabel");
+  label.style.fontSize=S.xpLabelFontSize+"px";
+  label.style.textAlign=S.xpLabelAlign;
 }
 
 /* ============ branch hold-box ============ */
@@ -2678,6 +2700,9 @@ document.getElementById("treeGearBtn").addEventListener("click",function(e){
     menu.style.display="block";
     document.getElementById("frameSizeInput").value=S.frameSize||"";
     document.getElementById("bubbleOpacityInput").value=Math.round(S.bubbleOpacity*100);
+    document.getElementById("xpLabelSizeInput").value=S.xpLabelFontSize;
+    document.getElementById("xpLabelAlignInput").value=S.xpLabelAlign;
+    document.getElementById("xpLabelPositionInput").value=S.xpLabelPosition;
     renderNotifySettings();
     positionPopoverNear(menu,document.getElementById("treeGearBtn").getBoundingClientRect());
   }else{
@@ -2705,6 +2730,23 @@ document.getElementById("bubbleOpacityInput").addEventListener("change",function
   var v=Math.max(10,Math.min(100,parseInt(e.target.value,10)||88));
   S.bubbleOpacity=v/100;
   e.target.value=v;
+  save();
+  applyFrameSize();
+});
+document.getElementById("xpLabelSizeInput").addEventListener("change",function(e){
+  var v=Math.max(6,Math.min(32,parseInt(e.target.value,10)||9));
+  S.xpLabelFontSize=v;
+  e.target.value=v;
+  save();
+  applyFrameSize();
+});
+document.getElementById("xpLabelAlignInput").addEventListener("change",function(e){
+  S.xpLabelAlign=e.target.value;
+  save();
+  applyFrameSize();
+});
+document.getElementById("xpLabelPositionInput").addEventListener("change",function(e){
+  S.xpLabelPosition=e.target.value;
   save();
   applyFrameSize();
 });
@@ -3309,6 +3351,9 @@ document.getElementById("impfile").addEventListener("change",function(e){
       if(typeof S.checkinXPAmount!=="number"||S.checkinXPAmount<0)S.checkinXPAmount=5;
       if(typeof S.checkinXPTotal!=="number")S.checkinXPTotal=0;
       if(typeof S.bubbleOpacity!=="number"||S.bubbleOpacity<=0||S.bubbleOpacity>1)S.bubbleOpacity=0.88;
+      if(typeof S.xpLabelFontSize!=="number"||S.xpLabelFontSize<6||S.xpLabelFontSize>32)S.xpLabelFontSize=9;
+      if(["left","center","right"].indexOf(S.xpLabelAlign)<0)S.xpLabelAlign="center";
+      if(["top","bottom"].indexOf(S.xpLabelPosition)<0)S.xpLabelPosition="bottom";
       if(typeof S.embersCount!=="number"||S.embersCount<1)S.embersCount=4;
       if(typeof S.embersSizeMin!=="number")S.embersSizeMin=1.6;
       if(typeof S.embersSizeMax!=="number")S.embersSizeMax=3.8;
