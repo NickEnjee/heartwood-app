@@ -1729,7 +1729,7 @@ function renderXP(justEarned){
   var info=levelInfo(lifetimeXP());
   var leveledUp = justEarned && lastLevel!==null && info.level>lastLevel;
   document.getElementById("xpfill").style.width=Math.round(info.have/info.need*100)+"%";
-  document.getElementById("xplabel").textContent="Level "+info.level+" · "+(info.need-info.have)+" to go";
+  document.getElementById("xplabel").textContent=info.have+"/"+info.need;
   var bar=document.getElementById("xpbar");
   bar.className="xpbar"+(leveledUp?" flare":"");
   if(leveledUp)setTimeout(function(){bar.className="xpbar";},900);
@@ -2606,8 +2606,7 @@ function runXPSegment(segments,i,finalLevel){
 
   fill.style.transitionDuration=duration+"ms";
   fill.style.width=Math.round(seg.toHave/seg.need*100)+"%";
-  document.getElementById("xplabel").textContent=
-    "Level "+seg.level+" · "+(seg.need-seg.toHave)+" to go";
+  document.getElementById("xplabel").textContent=seg.toHave+"/"+seg.need;
   playLevelSweep(duration,segPoints);
 
   setTimeout(function(){
@@ -2622,8 +2621,7 @@ function runXPSegment(segments,i,finalLevel){
       if(i+1>=segments.length){ lastLevel=finalLevel; return; }
       fill.style.transitionDuration="0ms";
       fill.style.width="0%";
-      document.getElementById("xplabel").textContent=
-        "Level "+segments[i+1].level+" · "+segments[i+1].need+" to go";
+      document.getElementById("xplabel").textContent="0/"+segments[i+1].need;
       void fill.offsetWidth;
       setTimeout(function(){ runXPSegment(segments,i+1,finalLevel); },1000);
     },FANFARE_MS);
