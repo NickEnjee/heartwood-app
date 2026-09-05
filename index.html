@@ -933,6 +933,7 @@
             <option value="top">Top of bar</option>
             <option value="bottom">Bottom of bar</option>
           </select></label>
+        <label class="lbl">Level label color<input type="color" id="xpLabelColorInput"></label>
         <details class="embers-details">
           <summary>Streak ember settings</summary>
           <div class="embers-grid">
@@ -1261,6 +1262,7 @@ function freshState(){
     xpLabelFontSize:9,
     xpLabelAlign:"center",
     xpLabelPosition:"bottom",
+    xpLabelColor:"#3A4252",
     embersCount:4,
     embersSizeMin:1.6,
     embersSizeMax:3.8,
@@ -1336,6 +1338,7 @@ if(typeof S.bubbleOpacity!=="number"||S.bubbleOpacity<=0||S.bubbleOpacity>1)S.bu
 if(typeof S.xpLabelFontSize!=="number"||S.xpLabelFontSize<6||S.xpLabelFontSize>32)S.xpLabelFontSize=9;
 if(["left","center","right"].indexOf(S.xpLabelAlign)<0)S.xpLabelAlign="center";
 if(["top","bottom"].indexOf(S.xpLabelPosition)<0)S.xpLabelPosition="bottom";
+if(typeof S.xpLabelColor!=="string"||!S.xpLabelColor)S.xpLabelColor="#3A4252";
 if(typeof S.embersCount!=="number"||S.embersCount<1)S.embersCount=4;
 if(typeof S.embersSizeMin!=="number")S.embersSizeMin=1.6;
 if(typeof S.embersSizeMax!=="number")S.embersSizeMax=3.8;
@@ -1656,6 +1659,7 @@ function applyFrameSize(){
   var label=document.getElementById("xplabel");
   label.style.fontSize=S.xpLabelFontSize+"px";
   label.style.textAlign=S.xpLabelAlign;
+  label.style.color=S.xpLabelColor;
 }
 
 /* ============ branch hold-box ============ */
@@ -2703,6 +2707,7 @@ document.getElementById("treeGearBtn").addEventListener("click",function(e){
     document.getElementById("xpLabelSizeInput").value=S.xpLabelFontSize;
     document.getElementById("xpLabelAlignInput").value=S.xpLabelAlign;
     document.getElementById("xpLabelPositionInput").value=S.xpLabelPosition;
+    document.getElementById("xpLabelColorInput").value=S.xpLabelColor;
     renderNotifySettings();
     positionPopoverNear(menu,document.getElementById("treeGearBtn").getBoundingClientRect());
   }else{
@@ -2747,6 +2752,11 @@ document.getElementById("xpLabelAlignInput").addEventListener("change",function(
 });
 document.getElementById("xpLabelPositionInput").addEventListener("change",function(e){
   S.xpLabelPosition=e.target.value;
+  save();
+  applyFrameSize();
+});
+document.getElementById("xpLabelColorInput").addEventListener("change",function(e){
+  S.xpLabelColor=e.target.value;
   save();
   applyFrameSize();
 });
@@ -3354,6 +3364,7 @@ document.getElementById("impfile").addEventListener("change",function(e){
       if(typeof S.xpLabelFontSize!=="number"||S.xpLabelFontSize<6||S.xpLabelFontSize>32)S.xpLabelFontSize=9;
       if(["left","center","right"].indexOf(S.xpLabelAlign)<0)S.xpLabelAlign="center";
       if(["top","bottom"].indexOf(S.xpLabelPosition)<0)S.xpLabelPosition="bottom";
+      if(typeof S.xpLabelColor!=="string"||!S.xpLabelColor)S.xpLabelColor="#3A4252";
       if(typeof S.embersCount!=="number"||S.embersCount<1)S.embersCount=4;
       if(typeof S.embersSizeMin!=="number")S.embersSizeMin=1.6;
       if(typeof S.embersSizeMax!=="number")S.embersSizeMax=3.8;
